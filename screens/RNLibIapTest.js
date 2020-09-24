@@ -34,7 +34,7 @@ class RNLibIapTest extends React.Component {
         }
     }
     componentDidMount = async () => {
-        this.getStorage();
+        //this.getStorage();
         console.log('Select item from: ', itemSkus);
 
 
@@ -71,9 +71,9 @@ class RNLibIapTest extends React.Component {
                     try {
                         //Get transactionReceipt before finishTransaction
                         //....ex save to database
-                        await AsyncStorage.setItem('Account', JSON.stringify(receipt));
+                        //await AsyncStorage.setItem('Account', JSON.stringify(receipt));
                         //....
-                        const ackResult = await finishTransaction(purchase, true); //true = consumeable, false = non-consumeable
+                        const ackResult = await finishTransaction(purchase, false); //true = consumeable, false = non-consumeable
                     } catch (ackErr) {
                         console.log('ackErr', ackErr);
                     }
@@ -93,7 +93,7 @@ class RNLibIapTest extends React.Component {
     }
 
     getStorage = async () => {
-        const jsonValue = await AsyncStorage.getItem('Account');
+        //const jsonValue = await AsyncStorage.getItem('Account');
 
         if (jsonValue !== null) {
             this.setState({ account_detail: JSON.parse(jsonValue) });
@@ -176,12 +176,12 @@ class RNLibIapTest extends React.Component {
                                 <TouchableOpacity key={index} onPress={() => this.requestPurchase(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }}>
                                     <Text>{item.title}</Text>
                                     <Text>{item.description}</Text>
-                                    <Text>ราคา {item.localizedPrice}</Text>
+                                    <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#000' }}> {item.localizedPrice}</Text>
                                 </TouchableOpacity>
                             )
                         })}
                     </View>
-                    <View style={{ borderBottomWidth: 1, width: '100%', marginBottom: 20 }}>
+                    <View style={{ borderBottomWidth: 1, width: '70%', marginBottom: 20, alignSelf: 'center' }}>
                         < Text > {null}</Text>
                     </View>
                     <View>
@@ -193,7 +193,7 @@ class RNLibIapTest extends React.Component {
                                 <TouchableOpacity key={index} onPress={() => this.requestSubscription(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }}>
                                     <Text>{item.title}</Text>
                                     <Text>{item.description}</Text>
-                                    <Text>ราคา {item.localizedPrice}</Text>
+                                    <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#000' }}> {item.localizedPrice}</Text>
                                 </TouchableOpacity>
                             )
                         })}
