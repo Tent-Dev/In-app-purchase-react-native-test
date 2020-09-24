@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Platform, Alert } from 'react-native';
-import RNIap, { purchaseErrorListener, purchaseUpdatedListener } from 'react-native-iap';
+import { AsyncStorage } from 'react-native';
+import { StyleSheet, Text, View, Platform, Alert, ScrollView } from 'react-native';
+import RNIap, { purchaseErrorListener, purchaseUpdatedListener, finishTransaction } from 'react-native-iap';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 let purchaseUpdateSubscription;
 let purchaseErrorSubscription;
@@ -23,17 +24,23 @@ class RNLibIapTest extends React.Component {
         super(props);
         this.state = {
             products: [],
+            subscription: [],
             receipt: '',
             availableItemsMessage: '',
+            account_detail: []
         }
     }
     componentDidMount = async () => {
+        this.getStorage();
         console.log('Select item from: ', itemSkus);
+
 
         try {
             const result = await RNIap.initConnection();
-            await RNIap.flushFailedPurchasesCachedAsPendingAndroid();
             console.log('initConnection', result);
+            const consumed = await RNIap.flushFailedPurchasesCachedAsPendingAndroid();
+            //const consumedOld = await RNIap.consumeAllItemsAndroid();
+            console.log('consumed all items?', consumed, consumedOld)
         } catch (err) {
             console.log('initConnection ERR: ', err.code, err.message);
         }
@@ -46,18 +53,48 @@ class RNLibIapTest extends React.Component {
             console.log('Get products list fail: ', err);
         }
 
-        purchaseUpdateSubscription = purchaseUpdatedListener((purchase) => {
-            console.log('purchaseUpdatedListener', purchase);
-            this.setState({
-                receipt: purchase.transactionReceipt
+        try {
+            const subscription = await RNIap.getSubscriptions(itemSkus);
+            this.setState({ subscription: subscription });
+            console.log('Get subscription: ', subscription);
+        } catch (err) {
+            console.log('Get subscription list fail: ', err);
+        }
+
+        purchaseUpdateSubscription = purchaseUpdatedListener(
+            async (purchase) => {
+                const receipt = purchase.transactionReceipt;
+                if (receipt) {
+                    try {
+                        //Get transactionReceipt before finishTransaction
+                        //....ex save to database
+                        await AsyncStorage.setItem('Account', JSON.stringify(receipt));
+                        //....
+                        const ackResult = await finishTransaction(purchase, false); //true = consumeable, false = non-consumeable
+                    } catch (ackErr) {
+                        console.log('ackErr', ackErr);
+                    }
+
+                    this.setState({ receipt }, () => this.goNext());
+                }
             },
-                () => this.goNext()
-            );
-        });
+        );
+
         purchaseErrorSubscription = purchaseErrorListener((error) => {
             console.log('purchaseErrorListener', error);
-            Alert.alert('purchase error', JSON.stringify(error));
+            if (error.code == 'E_ALREADY_OWNED') {
+                Alert.alert('คุณซื้อสินค้านี้ไปแล้ว', '', [{ text: 'ตกลง' }]);
+            }
+            //Alert.alert('purchase error', JSON.stringify(error));
         });
+    }
+
+    getStorage = async () => {
+        const jsonValue = await AsyncStorage.getItem('Account');
+
+        if (jsonValue !== null) {
+            this.setState({ account_detail: JSON.parse(jsonValue) });
+        }
     }
 
     componentWillUnmount() {
@@ -73,24 +110,26 @@ class RNLibIapTest extends React.Component {
     }
 
     goNext = () => {
-        Alert.alert('Receipt', this.state.receipt);
+        Alert.alert('ทำการสั่งซื้อสำเร็จ');
+        console.log('Receipt: ', this.state.receipt)
+        this.getStorage();
     };
 
     requestPurchase = async (sku) => {
         try {
             RNIap.requestPurchase(sku);
         } catch (err) {
-            console.log(err.code, err.message);
+            console.log('requestPurchase Error: ', err.code, err.message);
         }
     };
 
-    //   requestSubscription = async (sku) => {
-    //     try {
-    //       RNIap.requestSubscription(sku);
-    //     } catch (err) {
-    //       Alert.alert(err.message);
-    //     }
-    //   };
+    requestSubscription = async (sku) => {
+        try {
+            RNIap.requestSubscription(sku);
+        } catch (err) {
+            console.log('requestSubscription Error: ', err.code, err.message);
+        }
+    };
 
     // getAvailablePurchases = async () => {
     //     try {
@@ -114,19 +153,41 @@ class RNLibIapTest extends React.Component {
     render() {
         return (
             <View style={styles.container}>
-                <Text style={{ marginBottom: 30, fontSize: 30 }}>In app purchase</Text>
-                <View style={{ alignItems: 'flex-start' }}>
-                    {this.state.products.map((item) => {
-                        return (
-                            <TouchableOpacity onPress={() => this.requestPurchase(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1 }}>
-                                <Text>{item.title}</Text>
-                                <Text>{item.description}</Text>
-                                <Text>ราคา {item.localizedPrice}</Text>
-                            </TouchableOpacity>
-                        )
-                    })}
-                </View>
-            </View>
+                <ScrollView>
+                    <Text style={{ marginBottom: 30, marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
+                    <View>
+                        <Text style={{ marginBottom: 20, textAlign: 'center' }}>requestPurchase Type</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-start' }}>
+                        {this.state.products.map((item, index) => {
+                            return (
+                                <TouchableOpacity key={index} onPress={() => this.requestPurchase(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1 }}>
+                                    <Text>{item.title}</Text>
+                                    <Text>{item.description}</Text>
+                                    <Text>ราคา {item.localizedPrice}</Text>
+                                </TouchableOpacity>
+                            )
+                        })}
+                    </View>
+                    <View style={{ borderBottomWidth: 1, width: '100%', marginBottom: 20 }}>
+                        < Text > {null}</Text>
+                    </View>
+                    <View>
+                        <Text style={{ marginBottom: 20, textAlign: 'center' }}>requestSubscription Type</Text>
+                    </View>
+                    <View style={{ alignItems: 'flex-start' }}>
+                        {this.state.subscription.map((item, index) => {
+                            return (
+                                <TouchableOpacity key={index} onPress={() => this.requestSubscription(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1 }}>
+                                    <Text>{item.title}</Text>
+                                    <Text>{item.description}</Text>
+                                    <Text>ราคา {item.localizedPrice}</Text>
+                                </TouchableOpacity>
+                            )
+                        })}
+                    </View>
+                </ScrollView>
+            </View >
         )
     }
 }
