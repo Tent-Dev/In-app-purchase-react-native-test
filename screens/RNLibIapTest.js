@@ -40,7 +40,7 @@ class RNLibIapTest extends React.Component {
             console.log('initConnection', result);
             const consumed = await RNIap.flushFailedPurchasesCachedAsPendingAndroid();
             //const consumedOld = await RNIap.consumeAllItemsAndroid();
-            console.log('consumed all items?', consumed, consumedOld)
+            console.log('consumed all items?', consumed)
         } catch (err) {
             console.log('initConnection ERR: ', err.code, err.message);
         }
@@ -70,7 +70,7 @@ class RNLibIapTest extends React.Component {
                         //....ex save to database
                         await AsyncStorage.setItem('Account', JSON.stringify(receipt));
                         //....
-                        const ackResult = await finishTransaction(purchase, false); //true = consumeable, false = non-consumeable
+                        const ackResult = await finishTransaction(purchase, true); //true = consumeable, false = non-consumeable
                     } catch (ackErr) {
                         console.log('ackErr', ackErr);
                     }
@@ -130,25 +130,6 @@ class RNLibIapTest extends React.Component {
             console.log('requestSubscription Error: ', err.code, err.message);
         }
     };
-
-    // getAvailablePurchases = async () => {
-    //     try {
-    //       console.info(
-    //         'Get available purchases (non-consumable or unconsumed consumable)',
-    //       );
-    //       const purchases = await RNIap.getAvailablePurchases();
-    //       console.info('Available purchases :: ', purchases);
-    //       if (purchases && purchases.length > 0) {
-    //         this.setState({
-    //           availableItemsMessage: `Got ${purchases.length} items.`,
-    //           receipt: purchases[0].transactionReceipt,
-    //         });
-    //       }
-    //     } catch (err) {
-    //       console.log(err.code, err.message);
-    //       Alert.alert(err.message);
-    //     }
-    //   };
 
     render() {
         return (
