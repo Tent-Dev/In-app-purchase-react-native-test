@@ -1,8 +1,11 @@
 import React from 'react';
-import { AsyncStorage } from 'react-native';
+import { AsyncStorage, Dimensions } from 'react-native';
 import { StyleSheet, Text, View, Platform, Alert, ScrollView } from 'react-native';
 import RNIap, { purchaseErrorListener, purchaseUpdatedListener, finishTransaction } from 'react-native-iap';
 import { TouchableOpacity } from 'react-native-gesture-handler';
+const { width, height } = Dimensions.get('screen');
+const SCREEN_WIDTH = width < height ? width : height;
+const box_width = (SCREEN_WIDTH - (10 * 2)) / 2;
 let purchaseUpdateSubscription;
 let purchaseErrorSubscription;
 const itemSkus = Platform.select({
@@ -131,18 +134,46 @@ class RNLibIapTest extends React.Component {
         }
     };
 
+    getAvailablePurchases = async () => {
+        try {
+            console.info(
+                'Get available purchases (non-consumable or unconsumed consumable)',
+            );
+            const purchases = await RNIap.getAvailablePurchases();
+            console.info('Available purchases :: ', purchases);
+            if (purchases && purchases.length > 0) {
+                this.setState({
+                    availableItemsMessage: `Got ${purchases.length} items.`,
+                    receipt: purchases[0].transactionReceipt,
+                });
+            } else {
+                this.setState({
+                    availableItemsMessage: `Got 0 items.`,
+                });
+            }
+        } catch (err) {
+            console.log(err.code, err.message);
+        }
+    };
+
     render() {
         return (
             <View style={styles.container}>
                 <ScrollView>
-                    <Text style={{ marginBottom: 30, marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
+                    <Text style={{ marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
+                    <View style={{ alignItems: 'center', marginBottom: 30, marginTop: 30 }}>
+                        <TouchableOpacity onPress={this.getAvailablePurchases} style={{ padding: 10, backgroundColor: '#000', borderRadius: 10 }}>
+                            <Text style={{ color: '#fff' }}>Get available purchases</Text>
+                        </TouchableOpacity>
+                        <Text>{this.state.availableItemsMessage}</Text>
+                    </View>
                     <View>
                         <Text style={{ marginBottom: 20, textAlign: 'center' }}>requestPurchase Type</Text>
                     </View>
-                    <View style={{ alignItems: 'flex-start' }}>
+                    <View style={{ justifyContent: 'space-evenly', flexDirection: 'row', flexWrap: 'wrap' }}>
                         {this.state.products.map((item, index) => {
                             return (
-                                <TouchableOpacity key={index} onPress={() => this.requestPurchase(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1 }}>
+                                <TouchableOpacity key={index} onPress={() => this.requestPurchase(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }}>
                                     <Text>{item.title}</Text>
                                     <Text>{item.description}</Text>
                                     <Text>ราคา {item.localizedPrice}</Text>
@@ -156,10 +187,10 @@ class RNLibIapTest extends React.Component {
                     <View>
                         <Text style={{ marginBottom: 20, textAlign: 'center' }}>requestSubscription Type</Text>
                     </View>
-                    <View style={{ alignItems: 'flex-start' }}>
+                    <View style={{ justifyContent: 'space-evenly', flexDirection: 'row', flexWrap: 'wrap' }}>
                         {this.state.subscription.map((item, index) => {
                             return (
-                                <TouchableOpacity key={index} onPress={() => this.requestSubscription(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1 }}>
+                                <TouchableOpacity key={index} onPress={() => this.requestSubscription(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }}>
                                     <Text>{item.title}</Text>
                                     <Text>{item.description}</Text>
                                     <Text>ราคา {item.localizedPrice}</Text>
