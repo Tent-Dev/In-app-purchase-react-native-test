@@ -1,6 +1,6 @@
 {
   "name": "my-app",
-  "displayName": "my-app",
+  "displayName": "In-App Purchase",
   "expo": {
     "name": "my-app",
     "slug": "my-app",

@@ -1,0 +1,8 @@
+{
+    "git.ignoreLimitWarning": true,
+    "editor.codeActionsOnSave": null,
+    "editor.formatOnSave": true,
+    "files.associations": {
+        "*.js": "javascriptreact"
+    },
+}
