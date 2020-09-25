@@ -84,7 +84,7 @@ class RNLibIapTest extends React.Component {
                         if (receiptData.productId == 'android.test.purchased') {
                             await AsyncStorage.setItem('Account', 'premium');
                         }
-                        const ackResult = await finishTransaction(purchase, false); //true = consumeable, false = non-consumeable
+                        const ackResult = await finishTransaction(purchase); //true = consumeable, false = non-consumeable
                     } catch (ackErr) {
                         console.log('ackErr', ackErr);
                     }
