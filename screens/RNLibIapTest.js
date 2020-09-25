@@ -36,6 +36,7 @@ class RNLibIapTest extends React.Component {
     }
     componentDidMount = async () => {
         LogBox.ignoreAllLogs();
+        this.getAccount();
         this.props.navigation.addListener('focus', () => {
             console.log('Focus Home screen.');
             this.getAccount();
@@ -154,6 +155,7 @@ class RNLibIapTest extends React.Component {
     };
 
     //สำหรับเรียกดูของที่ซื้อไปแล้วแบบ non-consumable เพื่อใช้ Restoring Purchases หรือทำอย่างอื่นต่อ
+    //ถ้าเก็บ transaction ไว้ใน database เรา สามารถเช็คเองได้ ไม่ต้องใช้ getAvailablePurchases()
     getAvailablePurchases = async () => {
         const newState = { premium: false, ads: true }
         let restoredTitles = [];
@@ -208,14 +210,19 @@ class RNLibIapTest extends React.Component {
                 <ScrollView>
                     <View>
                         {this.state.account_type == 'premium' &&
-                            <View style={{ position: 'absolute', left: '55%', top: 70, padding: 5, borderRadius: 10, backgroundColor: '#D5BC49' }}>
-                                <Text style={{ fontSize: 10 }}>Premium Account</Text>
+                            <View>
+                                <View style={{ position: 'absolute', left: '30%', top: 50, padding: 5, borderBottomWidth: 1, width: '30%', borderColor: '#D5BC49' }}>
+                                    <Text>{null}</Text>
+                                </View>
+                                <View style={{ position: 'absolute', left: '55%', top: 70, padding: 5, borderRadius: 10, backgroundColor: '#D5BC49' }}>
+                                    <Text style={{ fontSize: 10 }}>Premium Account</Text>
+                                </View>
                             </View>
                         }
 
                         <Text style={{ marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
                     </View>
-                    <View style={{ alignItems: 'center', marginBottom: 30, marginTop: 30 }}>
+                    <View style={{ alignItems: 'center', marginBottom: 30, marginTop: 60 }}>
                         <TouchableOpacity onPress={this.getAvailablePurchases} style={{ padding: 10, backgroundColor: '#000', borderRadius: 10 }}>
                             <Text style={{ color: '#fff' }}>Restore Purchases</Text>
                         </TouchableOpacity>
