@@ -1,8 +1,8 @@
 import React from 'react';
 import { AsyncStorage, Dimensions } from 'react-native';
-import { StyleSheet, Text, View, Platform, Alert, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, Platform, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import RNIap, { purchaseErrorListener, purchaseUpdatedListener, finishTransaction } from 'react-native-iap';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+//import { TouchableOpacity } from 'react-native-gesture-handler';
 const { width, height } = Dimensions.get('screen');
 const SCREEN_WIDTH = width < height ? width : height;
 const box_width = (SCREEN_WIDTH - (10 * 2)) / 2;
@@ -30,11 +30,10 @@ class RNLibIapTest extends React.Component {
             subscription: [],
             receipt: '',
             availableItemsMessage: '',
-            account_detail: []
+            account_detail: [],
         }
     }
     componentDidMount = async () => {
-        //this.getStorage();
         console.log('Select item from: ', itemSkus);
 
 
@@ -92,13 +91,13 @@ class RNLibIapTest extends React.Component {
         });
     }
 
-    getStorage = async () => {
-        //const jsonValue = await AsyncStorage.getItem('Account');
+    // getStorage = async () => {
+    //     //const jsonValue = await AsyncStorage.getItem('Account');
 
-        if (jsonValue !== null) {
-            this.setState({ account_detail: JSON.parse(jsonValue) });
-        }
-    }
+    //     if (jsonValue !== null) {
+    //         this.setState({ account_detail: JSON.parse(jsonValue) });
+    //     }
+    // }
 
     componentWillUnmount() {
         if (purchaseUpdateSubscription) {
@@ -115,7 +114,6 @@ class RNLibIapTest extends React.Component {
     goNext = () => {
         Alert.alert('ทำการสั่งซื้อสำเร็จ');
         console.log('Receipt: ', this.state.receipt)
-        this.getStorage();
     };
 
     requestPurchase = async (sku) => {
@@ -134,7 +132,10 @@ class RNLibIapTest extends React.Component {
         }
     };
 
+    //สำหรับเรียกดูของที่ซื้อไปแล้วแบบ non-consumable เพื่อใช้ Restoring Purchases หรือทำอย่างอื่นต่อ
     getAvailablePurchases = async () => {
+        const newState = { premium: false, ads: true }
+        let restoredTitles = [];
         try {
             console.info(
                 'Get available purchases (non-consumable or unconsumed consumable)',
@@ -142,15 +143,35 @@ class RNLibIapTest extends React.Component {
             const purchases = await RNIap.getAvailablePurchases();
             console.info('Available purchases :: ', purchases);
             if (purchases && purchases.length > 0) {
-                this.setState({
-                    availableItemsMessage: `Got ${purchases.length} items.`,
-                    receipt: purchases[0].transactionReceipt,
-                });
+                purchases.forEach(purchase => {
+                    switch (purchase.productId) {
+                        case 'android.test.purchased':
+                            newState.premium = true
+                            restoredTitles.push('Premium Version');
+                            break
+
+                        case 'com.example.no_ads':
+                            newState.ads = false
+                            restoredTitles.push('No Ads');
+                            break
+                    }
+                })
+
+                Alert.alert('Restore Successful', 'You successfully restored the following purchases:\n' + restoredTitles.join(', '));
             } else {
-                this.setState({
-                    availableItemsMessage: `Got 0 items.`,
-                });
+                Alert.alert('Can\'t Restore', 'Your purchase is null');
+                console.log('Restore is Empty');
             }
+            // if (purchases && purchases.length > 0) {
+            //     this.setState({
+            //         availableItemsMessage: `Got ${purchases.length} items.`,
+            //         receipt: purchases[0].transactionReceipt,
+            //     });
+            // } else {
+            //     this.setState({
+            //         availableItemsMessage: `Got 0 items.`,
+            //     });
+            // }
         } catch (err) {
             console.log(err.code, err.message);
         }
@@ -163,9 +184,8 @@ class RNLibIapTest extends React.Component {
                     <Text style={{ marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
                     <View style={{ alignItems: 'center', marginBottom: 30, marginTop: 30 }}>
                         <TouchableOpacity onPress={this.getAvailablePurchases} style={{ padding: 10, backgroundColor: '#000', borderRadius: 10 }}>
-                            <Text style={{ color: '#fff' }}>Get available purchases</Text>
+                            <Text style={{ color: '#fff' }}>Restore Purchases</Text>
                         </TouchableOpacity>
-                        <Text>{this.state.availableItemsMessage}</Text>
                     </View>
                     <View>
                         <Text style={{ marginBottom: 20, textAlign: 'center' }}>requestPurchase Type</Text>
@@ -173,8 +193,8 @@ class RNLibIapTest extends React.Component {
                     <View style={{ justifyContent: 'space-evenly', flexDirection: 'row', flexWrap: 'wrap' }}>
                         {this.state.products.map((item, index) => {
                             return (
-                                <TouchableOpacity key={index} onPress={() => this.requestPurchase(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }}>
-                                    <Text>{item.title}</Text>
+                                <TouchableOpacity key={index} onPress={() => this.requestPurchase(item.productId)} style={[{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }, item.productId == 'android.test.purchased' && { borderColor: '#C7B45C' }]}>
+                                    <Text style={item.productId == 'android.test.purchased' && { color: '#D5BC49' }}>{item.productId == 'android.test.purchased' ? 'Premium Version' : item.title}</Text>
                                     <Text>{item.description}</Text>
                                     <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#000' }}> {item.localizedPrice}</Text>
                                 </TouchableOpacity>
@@ -190,8 +210,8 @@ class RNLibIapTest extends React.Component {
                     <View style={{ justifyContent: 'space-evenly', flexDirection: 'row', flexWrap: 'wrap' }}>
                         {this.state.subscription.map((item, index) => {
                             return (
-                                <TouchableOpacity key={index} onPress={() => this.requestSubscription(item.productId)} style={{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }}>
-                                    <Text>{item.title}</Text>
+                                <TouchableOpacity key={index} onPress={() => this.requestSubscription(item.productId)} style={[{ marginBottom: 20, padding: 10, borderRadius: 15, borderWidth: 1, width: box_width }, item.productId == 'android.test.purchased' && { borderColor: '#C7B45C' }]}>
+                                    <Text style={item.productId == 'android.test.purchased' && { color: '#D5BC49' }}>{item.productId == 'android.test.purchased' ? 'Premium Version' : item.title}</Text>
                                     <Text>{item.description}</Text>
                                     <Text style={{ fontWeight: 'bold', fontSize: 20, color: '#000' }}> {item.localizedPrice}</Text>
                                 </TouchableOpacity>
