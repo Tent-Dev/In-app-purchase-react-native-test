@@ -1,6 +1,7 @@
 import React from 'react';
-import { StyleSheet, Text, View, Platform, Alert, ScrollView, TouchableOpacity } from 'react-native';
+import { StyleSheet, AsyncStorage, Text, View, Platform, Alert, ScrollView, TouchableOpacity, LogBox } from 'react-native';
 import RNIap from 'react-native-iap';
+
 //import { TouchableOpacity } from 'react-native-gesture-handler';
 
 class History extends React.Component {
@@ -13,6 +14,7 @@ class History extends React.Component {
     }
 
     componentDidMount() {
+        LogBox.ignoreAllLogs();
         this.getAvailablePurchases();
         this.props.navigation.addListener('focus', () => {
             console.log('Focus History screen.');
@@ -22,8 +24,14 @@ class History extends React.Component {
 
     clear = async () => {
         await RNIap.consumeAllItemsAndroid();
+        await AsyncStorage.setItem('Account', '');
         await this.getAvailablePurchases();
-        Alert.alert('Clear');
+        Alert.alert('Clear', 'รีเซ็ตข้อมูล purchase', [{ text: 'ตกลง' }]);
+    }
+
+    clearStorage = async () => {
+        await AsyncStorage.setItem('Account', '');
+        Alert.alert('Clear', 'ทดสอบ Restore purchase', [{ text: 'ตกลง' }]);
     }
 
     getAvailablePurchases = async () => {
@@ -59,6 +67,11 @@ class History extends React.Component {
                     <View style={{ alignItems: 'center', marginBottom: 30, marginTop: 30 }}>
                         <TouchableOpacity onPress={this.clear} style={{ padding: 10, backgroundColor: '#000', borderRadius: 10, marginTop: 20, marginBottom: 20 }}>
                             <Text style={{ color: '#fff' }}>Clear Purchases Data</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={{ alignItems: 'center', marginBottom: 30 }}>
+                        <TouchableOpacity onPress={this.clearStorage} style={{ padding: 10, backgroundColor: '#000', borderRadius: 10, marginTop: 20, marginBottom: 20 }}>
+                            <Text style={{ color: '#fff' }}>Clear Async Storage Data Only</Text>
                         </TouchableOpacity>
                     </View>
                     <View style={{ alignItems: 'flex-start' }}>

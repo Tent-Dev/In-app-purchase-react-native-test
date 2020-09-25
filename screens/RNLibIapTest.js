@@ -1,5 +1,5 @@
 import React from 'react';
-import { AsyncStorage, Dimensions } from 'react-native';
+import { AsyncStorage, Dimensions, LogBox } from 'react-native';
 import { StyleSheet, Text, View, Platform, Alert, ScrollView, TouchableOpacity } from 'react-native';
 import RNIap, { purchaseErrorListener, purchaseUpdatedListener, finishTransaction } from 'react-native-iap';
 //import { TouchableOpacity } from 'react-native-gesture-handler';
@@ -31,9 +31,16 @@ class RNLibIapTest extends React.Component {
             receipt: '',
             availableItemsMessage: '',
             account_detail: [],
+            account_type: ''
         }
     }
     componentDidMount = async () => {
+        LogBox.ignoreAllLogs();
+        this.props.navigation.addListener('focus', () => {
+            console.log('Focus Home screen.');
+            this.getAccount();
+        });
+
         console.log('Select item from: ', itemSkus);
 
 
@@ -68,10 +75,14 @@ class RNLibIapTest extends React.Component {
                 const receipt = purchase.transactionReceipt;
                 if (receipt) {
                     try {
+                        var receiptData = JSON.parse(receipt);
                         //Get transactionReceipt before finishTransaction
                         //....ex save to database
                         //await AsyncStorage.setItem('Account', JSON.stringify(receipt));
                         //....
+                        if (receiptData.productId == 'android.test.purchased') {
+                            await AsyncStorage.setItem('Account', 'premium');
+                        }
                         const ackResult = await finishTransaction(purchase, false); //true = consumeable, false = non-consumeable
                     } catch (ackErr) {
                         console.log('ackErr', ackErr);
@@ -112,9 +123,19 @@ class RNLibIapTest extends React.Component {
     }
 
     goNext = () => {
-        Alert.alert('ทำการสั่งซื้อสำเร็จ');
+        Alert.alert('ทำการสั่งซื้อสำเร็จ', 'ยินดีด้วย คุณได้อัพเกรดเป็นระดับ Premium แล้ว', [{ text: 'ตกลง' }]);
         console.log('Receipt: ', this.state.receipt)
+        this.getAccount();
     };
+
+    getAccount = async () => {
+        var getType = await AsyncStorage.getItem('Account');
+        if (getType == 'premium') {
+            this.setState({ account_type: 'premium' });
+        } else {
+            this.setState({ account_type: '' });
+        }
+    }
 
     requestPurchase = async (sku) => {
         try {
@@ -147,7 +168,11 @@ class RNLibIapTest extends React.Component {
                     switch (purchase.productId) {
                         case 'android.test.purchased':
                             newState.premium = true
-                            restoredTitles.push('Premium Version');
+                            AsyncStorage.setItem('Account', 'premium').then(() => {
+                                this.setState({ account_type: 'premium' });
+                                restoredTitles.push('Premium Version');
+                            });
+
                             break
 
                         case 'com.example.no_ads':
@@ -181,7 +206,15 @@ class RNLibIapTest extends React.Component {
         return (
             <View style={styles.container}>
                 <ScrollView>
-                    <Text style={{ marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
+                    <View>
+                        {this.state.account_type == 'premium' &&
+                            <View style={{ position: 'absolute', left: '55%', top: 70, padding: 5, borderRadius: 10, backgroundColor: '#D5BC49' }}>
+                                <Text style={{ fontSize: 10 }}>Premium Account</Text>
+                            </View>
+                        }
+
+                        <Text style={{ marginTop: 30, fontSize: 30, textAlign: 'center' }}>In app purchase</Text>
+                    </View>
                     <View style={{ alignItems: 'center', marginBottom: 30, marginTop: 30 }}>
                         <TouchableOpacity onPress={this.getAvailablePurchases} style={{ padding: 10, backgroundColor: '#000', borderRadius: 10 }}>
                             <Text style={{ color: '#fff' }}>Restore Purchases</Text>
