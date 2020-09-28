@@ -140,7 +140,7 @@ class RNLibIapTest extends React.Component {
 
     requestPurchase = async (sku) => {
         try {
-            RNIap.requestPurchase(sku);
+            RNIap.requestPurchase(sku, false);
         } catch (err) {
             console.log('requestPurchase Error: ', err.code, err.message);
         }
@@ -148,7 +148,7 @@ class RNLibIapTest extends React.Component {
 
     requestSubscription = async (sku) => {
         try {
-            RNIap.requestSubscription(sku);
+            RNIap.requestSubscription(sku, false);
         } catch (err) {
             console.log('requestSubscription Error: ', err.code, err.message);
         }
