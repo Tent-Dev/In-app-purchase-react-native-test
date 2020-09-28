@@ -108,6 +108,9 @@ class RNLibIapTest extends React.Component {
             else if (error.code == 'E_DEFERRED_PAYMENT') {
                 this.errAlert('การชำระเงินรอตัดบัญชี');
             }
+            else if (error.code == 'E_RECEIPT_FAILED' || error.code == 'E_RECEIPT_FINISHED_FAILED') {
+                this.errAlert('ใบเสร็จรับเงินล้มเหลว');
+            }
             else if (error.code == 'E_NOT_ENDED') {
                 this.errAlert('ระบบการชำระเงินเปิดไว้อยู่แล้ว', 'หากต้องการเริ่มต้นใหม่ กรุณาเรียกใช้ endConnection()');
             }
