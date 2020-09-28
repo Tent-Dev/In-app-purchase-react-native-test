@@ -97,10 +97,33 @@ class RNLibIapTest extends React.Component {
         purchaseErrorSubscription = purchaseErrorListener((error) => {
             console.log('purchaseErrorListener', error);
             if (error.code == 'E_ALREADY_OWNED') {
-                Alert.alert('คุณซื้อสินค้านี้ไปแล้ว', '', [{ text: 'ตกลง' }]);
+                this.errAlert('คุณซื้อสินค้านี้ไปแล้ว', 'ไม่สามารถซื้อซ้ำได้อีก');
             }
+            else if (error.code == 'E_NETWORK_ERROR') {
+                this.errAlert('การเชื่อมต่อมีปัญหา');
+            }
+            else if (error.code == 'E_IAP_NOT_AVAILABLE') {
+                this.errAlert('ในสามารถเปิดการชำระเงินได้', 'โปรดตรวจสอบระบบหรืออุปกรณ์ที่คุณใช้');
+            }
+            else if (error.code == 'E_DEFERRED_PAYMENT') {
+                this.errAlert('การชำระเงินรอตัดบัญชี');
+            }
+            else if (error.code == 'E_NOT_ENDED') {
+                this.errAlert('ระบบการชำระเงินเปิดไว้อยู่แล้ว', 'หากต้องการเริ่มต้นใหม่ กรุณาเรียกใช้ endConnection()');
+            }
+            else if (error.code == 'E_SERVICE_ERROR') {
+                this.errAlert('ไม่สามารถชำระเงินได้', 'เป็นปัญหากับอุปกรณ์ของคุณ, ไม่ได้ลงชื่อเข้าใช้ หรือ Store อาจหยุดทำงาน');
+            }
+            else if (error.code == 'E_BILLING_RESPONSE_JSON_PARSE_ERROR') {
+                this.errAlert('รูปแบบข้อมูลการชำระเงินไม่ถูกต้อง', 'E_BILLING_RESPONSE_JSON_PARSE_ERROR');
+            }
+
             //Alert.alert('purchase error', JSON.stringify(error));
         });
+    }
+
+    errAlert = (mainText = '', secondText = '') => {
+        Alert.alert(mainText, secondText, [{ text: 'ตกลง' }]);
     }
 
     // getStorage = async () => {
@@ -140,17 +163,23 @@ class RNLibIapTest extends React.Component {
 
     requestPurchase = async (sku) => {
         try {
-            RNIap.requestPurchase(sku, false);
+            await RNIap.requestPurchase(sku);
         } catch (err) {
             console.log('requestPurchase Error: ', err.code, err.message);
+            if (err.code == 'PROMISE_BUY_ITEM') {
+                this.errAlert('ไม่พบสินค้านี้ในระบบ');
+            }
         }
     };
 
     requestSubscription = async (sku) => {
         try {
-            RNIap.requestSubscription(sku, false);
+            await RNIap.requestSubscription(sku);
         } catch (err) {
             console.log('requestSubscription Error: ', err.code, err.message);
+            if (err.code == 'PROMISE_BUY_ITEM') {
+                this.errAlert('ไม่พบสินค้านี้ในระบบ');
+            }
         }
     };
 
