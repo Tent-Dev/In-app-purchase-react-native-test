@@ -157,7 +157,6 @@ class RNLibIapTest extends React.Component {
     //สำหรับเรียกดูของที่ซื้อไปแล้วแบบ non-consumable เพื่อใช้ Restoring Purchases หรือทำอย่างอื่นต่อ
     //ถ้าเก็บ transaction ไว้ใน database เรา สามารถเช็คเองได้ ไม่ต้องใช้ getAvailablePurchases()
     getAvailablePurchases = async () => {
-        const newState = { premium: false, ads: true }
         let restoredTitles = [];
         try {
             console.info(
@@ -169,21 +168,19 @@ class RNLibIapTest extends React.Component {
                 purchases.forEach(purchase => {
                     switch (purchase.productId) {
                         case 'android.test.purchased':
-                            newState.premium = true
                             AsyncStorage.setItem('Account', 'premium').then(() => {
                                 this.setState({ account_type: 'premium' });
-                                restoredTitles.push('Premium Version');
+                                //restoredTitles.push('Premium Version');
                             });
+                            restoredTitles.push('Premium Version');
 
                             break
 
                         case 'com.example.no_ads':
-                            newState.ads = false
                             restoredTitles.push('No Ads');
                             break
                     }
                 })
-
                 Alert.alert('Restore Successful', 'You successfully restored the following purchases:\n' + restoredTitles.join(', '));
             } else {
                 Alert.alert('Can\'t Restore', 'Your purchase is null');
